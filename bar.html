@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<title>Unemployment Rates for States</title>
 <script src="http://d3js.org/d3.v3.min.js"></script>
   <style type="text/css">
     rect {
@@ -10,11 +11,18 @@
     text {
         font: 10px sans-serif;
     }
+    text.title {
+    	font: 15px sans-serif;
+    }
   </style>
 </head>
 <body>
+<form>
+<label><input type="radio" name="order" value="state"> State</label>
+<label><input type="radio" name="order" value="rate" checked> Rate</label>
+</form>
   <script type="text/javascript">
-
+	
     var margin = {top: 50, bottom: 10, left:300, right: 40};
     var width = 900 - margin.left - margin.right;
     var height = 900 - margin.top - margin.bottom;
@@ -25,11 +33,14 @@
     var bar_height = 15;
 
     var state = function(d) { return d.State; };
-
+	
+	var rateSorted = true;
+	var statesSorted = false;
+	
     var svg = d3.select("body").append("svg")
       .attr("width", width+margin.left+margin.right)
       .attr("height", height+margin.top+margin.bottom);
-
+	
     var g = svg.append("g")
       .attr("transform", "translate("+margin.left+","+margin.top+")");
 
@@ -40,19 +51,113 @@
 
       xScale.domain([min, max]);
       yScale.domain(data.map(state));
+      
+      g.append("g");
 
-      var groups = g.append("g")
-        .selectAll("g")
+      var groups = g.selectAll("g")
         .data(data)
       .enter()
         .append("g")
         .attr("transform", function(d, i) { return "translate(0, " + yScale(d.State) +")"; });
-
+	  
+	  var title = g
+	  	.append("text")
+      	.attr("class", "title")
+      	.attr("x", 0)
+      	.attr("y", -20)
+      	.text("Unemployment Rates for States");
+      
+      // Add in unemployment rates
+       groups.append("text")
+      .attr("x", function(d) { return xScale(d.Rate) - 20; })
+      .attr("y", bar_height / 2)
+      .attr("dy", ".35em")
+      .attr("fill", "white")
+      .text(function(d) { return d.Rate; });
+      
       var bars = groups
         .append("rect")
         .attr("width", function(d) { return xScale(d.Rate); })
         .attr("height", bar_height);
-
+        
+       
+      
+      // Add in state names
+      groups.append("text")
+      .attr("x", function(d) { return (0 - xScale(d.State)); })
+      .attr("y", bar_height / 2)
+      .attr("dy", ".35em")
+      .attr("dx", "-1em")
+      .attr("text-anchor", "end")
+      .attr("fill", "orange")
+      .text(function(d) { return d.State; });
+	   
+	   
+  		// Sort functions adapted from "table.html"
+  		function rateSort(){
+  			if(rateSorted){
+  				rateSorted = false;
+  				data = groups.sort(function(a, b) {
+  								
+  					//Check that states are sorted alphabetically, in the case of identical rates
+  					if(a.Rate != b.Rate){
+  						return d3.descending(a.Rate, b.Rate)
+  					}
+  					else{
+  						return d3.ascending(a.State, b.State)
+  					}
+  									
+  				}).data();
+  			}
+  			else{
+  				rateSorted = true;
+  				data = groups.sort(function(a, b) { 
+  								
+  					//Check that states are sorted alphabetically, in the case of identical ranks
+  					if(a.Rate != b.Rate){
+  						return d3.ascending(a.Rate, b.Rate)
+  					}
+  					else{
+  						return d3.ascending(a.State, b.State)
+  					}
+  									
+  				}).data();
+  			}
+  		};
+  		
+  		function stateSort(){
+  				if(statesSorted){
+	  					statesSorted = false;
+	  					data = groups.sort(function(a, b) {
+	  						return d3.descending(a.State, b.State)
+	  					}).data();
+	  			}
+	  			else{
+	  					statesSorted = true;
+	  					data = groups.sort(function(a, b) {
+	  						return d3.ascending(a.State, b.State)
+	  					}).data();
+	  			}
+  		};
+  		
+  		// Reorder the data, and then...the bars fly around! Where the magic happens.
+  		function reorder(){
+  			selectedValue = this.value;
+  			if  (selectedValue === "state"){
+  				stateSort();
+  			}
+  			else if (selectedValue === "rate"){
+  				rateSort();	
+  			}
+  			yScale.domain(data.map(state));
+			groups.transition()
+   				  .duration(750)
+   				  .delay(function(d, i) { return i * 10; })
+   				  .attr("transform", function(d, i) { return "translate(0," + yScale(d.State) + ")"; });
+  		};
+  		
+  		d3.selectAll("input").on("click", reorder);
+  		
     });
   </script>
 </body>

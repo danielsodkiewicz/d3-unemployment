@@ -2,35 +2,232 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CS171 Homework 1</title>
+  <title>Unemployment Rates for States</title>
 
   <style type="text/css">
-  /* YOUR CSS */
+  body {
+	font-family: sans-serif;
+	line-height: 1.8em;
+	color: #000;
+	text-align: center;
+	min-width: 560px;
+	background-color: white;
+   }
+  rect {
+        fill: teal;
+        fill-opacity: .8;
+   }
+   text {
+        font: 10px sans-serif;
+   }
+  table {
+  	margin-left: auto;
+  	margin-right: auto;
+  }
   </style>
 </head>
 <body>
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <script>
-  d3.tsv("unemp_states_us_nov_2013.tsv", function(error, data){
+	
+	//This function checks the position of the row, to refresh with appropriate zebra stripes
+	function reZebra(d, i) {
+         if (i % 2 === 0){
+           return "#fff";
+         }
+        else {
+           return "#c4c4c4";
+         }
+    };
+	
+	//Markers to know the state of whether rows are sorted, and if so, how.
+	var statesSorted = false;
+	var rateSorted = true;
+	
+	d3.select("tbody").selectAll("tr").remove();
+	
+	//Add title to the webpage
+  	d3.select("head").append("h1").text("Unemployment Rates for States");
+  	
+  	d3.text("unemp_states_us_nov_2013.tsv", function(datasetText) {
 
-      var table = d3.select("body").append("table"),
-      tbody = table.append("tbody");
+	var parsedTSV = d3.tsv.parseRows(datasetText);
 
-      var rows = tbody.selectAll("tr")
-      .data(data)
-      .enter()
-      .append("tr");
+	//Isolate the headers, cut them into a separate array
+	var headers = parsedTSV.shift();
 
-      var cells = rows.selectAll("td")
-      .data(function(row) {
-        return d3.range(Object.keys(row).length).map(function(column, i) {
-          return row[Object.keys(row)[i]];
-          });
-        })
-      .enter()
-      .append("td")
-      .text(function(d) { return d; });
-      });
+	//Setup different containers for the table				
+	var table = d3.select("body")
+    .append("table")
+    .style("border-collapse", "collapse")
+    .style("border", "2px black solid");
+    table.append("caption").text("Unemployment Rates for States");
+	var thead = table.append("thead").append("tr");
+	var tbody = table.append("tbody");
+	
+	
+	
+  	
+  	//Logic for sorting by rate
+	function sortByRate(d, i, n){
+		if(rateSorted){
+		
+			//Adjust cursor style
+			d3.select(n).style("cursor", "n-resize");
+			
+  			rateSorted = false;
+  			tbody.selectAll("tr").sort(function(a, b) {
+  								
+  				//Check that states are sorted alphabetically, in the case of identical rates
+  				if(a[2] != b[2]){
+  					return d3.descending(parseFloat(a[2]), parseFloat(b[2]))
+  				}
+  				else{
+  					return d3.ascending(a[1], b[1])
+  				}
+  									
+  			}).style("background-color", function(d,i) {return reZebra(d,i)});
+  		}
+  		else{
+  		
+  			//Adjust cursor style
+  			d3.select(n).style("cursor", "s-resize");
+  			
+  			rateSorted = true;
+  			tbody.selectAll("tr").sort(function(a, b) { 
+  								
+  				//Check that states are sorted alphabetically, in the case of identical rates
+  				if(a[2] != b[2]){
+  					return d3.ascending(parseFloat(a[2]), parseFloat(b[2]))
+  				}
+  				else{
+  					return d3.ascending(a[1], b[1])
+  				}
+  									
+  			}).style("background-color", function(d,i) {return reZebra(d,i)});
+  		}
+  			
+	};
+	
+	// Set up headers so that they are atop the table, and so that clicking them activates sorting functionality
+	var settingupheaders = thead.selectAll("tr")
+					.data(headers)
+					.enter().append("th")
+					.style("border", "1px black solid")
+    				.style("padding", "5px")
+    				.text(function(d){return d;})
+    				.style("font-size", "12px")
+					.on("load", function(d, i) {
+						sortByRate(d, i, this)
+						
+					})
+					.on("click", function(d, i) { 
+					
+					
+						// Sorting by state name
+						if (i == 1){
+							if(statesSorted){
+								d3.select(this).style("cursor", "n-resize");
+	  							statesSorted = false;
+	  							tbody.selectAll("tr").sort(function(a, b) { 
+	  								return d3.descending(a[1], b[1])
+	  							}).style("background-color", function(d,i) {return reZebra(d,i)});
+	  						}
+	  						else{
+	  							d3.select(this).style("cursor", "s-resize");
+	  							statesSorted = true;
+	  							tbody.selectAll("tr").sort(function(a, b) { 
+	  								return d3.ascending(a[1], b[1])
+	  							}).style("background-color", function(d,i) {return reZebra(d,i)});
+	  						}
+  						}
+  						
+  						
+  						
+  						// Sorting by rate
+  						else if (i == 2){
+  							sortByRate(d, i, this);
+  						}
+  						
+					});
+							    
+
+	//Setup rows so that crosshair functionality works, and afterwards refreshes to zebra stripes
+    var tr = tbody.selectAll("tr")
+    				.data(parsedTSV)
+    				.enter().append("tr")
+    				.style("background-color", function(d,i) {return reZebra(d,i)})
+					.attr('class', function(d,i){ return "row_" + i; })
+     				.on("mouseover", function(d, i){
+         				d3.select("tr.row_"+i).style("background-color", "yellow");
+      				})
+     				.on("mouseout", function(d,i){
+	  	 				d3.select("tr.row_"+i).style("background-color", function(d,i) {return reZebra(d,i)});
+ 	  				});
+ 		
+ 	//Setup columns so that crosshair functionality works, and afterwards refreshes to zebra stripes			
+ 	var td = tr.selectAll("td")
+    				.data(function(row) {
+        				return d3.range(Object.keys(row).length).map(function(column, i) {
+          					return row[Object.keys(row)[i]];
+        				});
+     				})
+    				.enter().append("td")
+    				.style("border", "1px black solid")
+    				.style("padding", "5px")
+    				.text(function(d){return d;})
+    				.style("font-size", "12px")
+    				.attr('class', function(d,i){ return "col_" + i; })
+    				.on("mouseover", function(d, i){
+    					d3.selectAll('td.col_'+i).style("background-color", "yellow");
+    					tbody.selectAll("tr").style("background-color", function(d,i) {return reZebra(d,i)});
+     				})
+    				.on("mouseout", function(d,i){ //correct index is passed here!
+    					d3.selectAll('td.col_' + i).style("background-color", null);
+    					rateEncode();
+    					tbody.selectAll("tr").style("background-color", function(d,i) {return reZebra(d,i)}); 
+    				});
+    
+    //Set up bar column of chart	
+	var width = 100;
+	var height = 10;
+	
+	var bars = tr.insert("td").append("svg")
+   					.attr("width", width)
+   					.attr("height", height)
+   					.append("rect")
+   					.attr("height", height)
+   					.attr("width", function(d) { return parseFloat(d[0]); });
+   									    
+	var addBarChartHeader = thead.append("th").text("Chart")
+							.style("border", "1px black solid")
+							.style("padding", "5px")
+							.style("font-size", "12px")
+							.on("click", function(d, i){
+								// No need to create new sorting functionality - the bars use the same rate data.
+								sortByRate(d, i, this);
+							});	
+   	
+   	// Get unemployment rate data in a usable numerical format
+	var rates = d3.values(tbody.selectAll("td.col_2").data());
+	var newRates = rates.map(Number);
+	
+	// Generate color scale
+	var color = d3.scale.linear()
+  		.domain([d3.min(newRates), d3.max(newRates)])
+  		.interpolate(d3.interpolateRgb)
+  		.range(["orangered", "silver"]);
+  	
+  	// Visually encode unemployment data with color scale defined above
+	function rateEncode(){
+		tbody.selectAll("td.col_2").style("background-color", function(d, i){ return color(d) });
+		tbody.selectAll("tr").style("background-color", function(d,i) {return reZebra(d,i)});
+	};
+	 rateEncode();
+
+	
+   					
+});
   </script>
 </body>
 </html>

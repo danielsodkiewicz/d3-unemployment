@@ -1,0 +1,37 @@
+1. It specifies that a header cell of the table should span the width of three columns.
+
+2. Styles applied to th element containing "Rank":
+In the html, align="center" is applied. CSS equivalent is: 
+In bls_content.css, padding-top/right/bottom/left of 3px - this specifies that there 
+should be 3 px between each side of the word "Rank" and the lines of the cell it is within.
+In bls_combined.css, text-align for th elements is set to -webkit-center
+Chrome's 'user agent stylesheet' sets some properties for the th element:
+font-weight as bold
+display: table-cell
+vertical-align: inherit
+
+3.
+
+The largest difference between the DOM inspector and the HTML source is the way the DOM 
+inspector gives a nested view, focused on showing tags which can then be expanded, rather 
+than the content within the tags.
+
+Additionally, once a tag is selected or hovered over, the DOM inspector shows a box on the 
+right that displays the geometry of the element and any styling applied to that element. 
+The element is highlighted on the webpage as well.
+
+Given the DOM inspector's ability to allow the user to view visual design, css styles and 
+html tags concurrently, I would use it once I had already designed a webpage and was tweaking 
+it to make it look better or to fix flaws. It works well to use with something you've built
+and already know the structure of well.
+
+The HTML source, unlike the DOM Inspector, shows all the tags and content of the webpage - 
+the CSS styling may or may not be immediately visible, if it is linked to, or may be at 
+the top of the page - and there is no tracking mechanisms to see the actual webpage element 
+at the same time you look at the HTML code for that element.
+
+However, the HTML source is useful to get a picture of how all the different pieces of a
+webpage are arranged, and is what I would work with when building functionality from scratch
+or to get a sense of where all the parts of an unfamiliar webpage are 'coming from' 
+(Is the javascript or css local? How does the actual javascript code work?)
+
