@@ -48,7 +48,7 @@
 	d3.select("tbody").selectAll("tr").remove();
 	
 	//Add title to the webpage
-  	d3.select("head").append("h1").text("Unemployment Rates for States");
+  	d3.select("body").append("h1").text("Unemployment Rates for States");
   	
   	d3.text("unemp_states_us_nov_2013.tsv", function(datasetText) {
 
